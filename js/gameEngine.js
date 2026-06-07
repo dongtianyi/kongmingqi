@@ -16,6 +16,10 @@ class GameEngine {
     this.hintHole = null;
     this.stepCount = 0;
 
+    this.demoPlaying = false;
+    this.demoCurrentStep = -1;
+    this.demoAnimPeg = null;
+
     this.resize();
   }
 
@@ -51,7 +55,29 @@ class GameEngine {
     this.hintHole = null;
   }
 
+  startDemo(demoPlayer) {
+    this.demoPlaying = true;
+    this.demoCurrentStep = -1;
+    this.state = 'playing';
+    this.selectedHole = null;
+    this.dragging = false;
+    this.hintHole = null;
+    this.stepCount = 0;
+  }
+
+  endDemo() {
+    this.demoPlaying = false;
+    this.demoCurrentStep = -1;
+    this.demoAnimPeg = null;
+  }
+
+  updateDemoState(step, animPeg) {
+    this.demoCurrentStep = step;
+    this.demoAnimPeg = animPeg;
+  }
+
   handleMouseDown(x, y) {
+    if (this.demoPlaying) return; // Block input during demo
     if (this.state !== 'playing') return;
 
     const hole = this.boardRenderer.getHoleAtPosition(x, y);
@@ -124,7 +150,10 @@ class GameEngine {
       dragging: this.dragging,
       dragX: this.dragX,
       dragY: this.dragY,
-      hintHole: this.hintHole
+      hintHole: this.hintHole,
+      demoPlaying: this.demoPlaying,
+      demoCurrentStep: this.demoCurrentStep,
+      demoAnimPeg: this.demoAnimPeg
     };
 
     if (this.state === 'menu') {
@@ -133,7 +162,24 @@ class GameEngine {
       this.boardRenderer.draw(this.ctx, theme, gameState);
       this.effectEngine.update();
       this.effectEngine.draw(this.ctx, theme);
+
+      // Draw demo step indicator
+      if (this.demoPlaying && this.demoCurrentStep >= 0) {
+        this._drawDemoIndicator(theme);
+      }
     }
+  }
+
+  _drawDemoIndicator(theme) {
+    const canvasW = this.canvas.width / window.devicePixelRatio;
+    const text = `天才十八步 - 第 ${this.demoCurrentStep + 1} / 18 步`;
+    this.ctx.save();
+    this.ctx.font = 'bold 16px sans-serif';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillStyle = theme.textColor;
+    this.ctx.globalAlpha = 0.9;
+    this.ctx.fillText(text, canvasW / 2, 30);
+    this.ctx.restore();
   }
 
   getGameState() {

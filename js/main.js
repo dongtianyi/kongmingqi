@@ -7,12 +7,14 @@
   const effectEngine = new EffectEngine();
   const gameEngine = new GameEngine(canvas, themeManager, boardRenderer, pegSystem, effectEngine);
   const tutorial = new Tutorial();
+  const demoPlayer = new DemoPlayer();
 
   // Initialize theme
   themeManager.apply();
 
   // Main render loop
   function gameLoop() {
+    demoPlayer.tick();
     gameEngine.render();
     requestAnimationFrame(gameLoop);
   }
@@ -23,6 +25,10 @@
     const state = gameEngine.getGameState();
     document.getElementById('stepCount').textContent = `步数: ${state.stepCount}`;
     document.getElementById('pegCount').textContent = `剩余棋子: ${state.pegCount}`;
+
+    if (gameEngine.demoPlaying && demoPlayer.getCurrentStep() >= 0) {
+      document.getElementById('stepCount').textContent = `演示: ${demoPlayer.getCurrentStep() + 1}/18`;
+    }
 
     // Overlays
     document.getElementById('menuOverlay').classList.toggle('hidden', state.state !== 'menu');
@@ -125,11 +131,30 @@
     tutorial.nextPage();
   });
 
+  document.getElementById('demo18Btn').addEventListener('click', () => {
+    gameEngine.startGame(33);
+    themeManager.apply();
+    gameEngine.startDemo(demoPlayer);
+
+    demoPlayer.onStepComplete = (step) => {
+      gameEngine.updateDemoState(step, demoPlayer.getAnimatingPeg());
+    };
+
+    demoPlayer.onDemoComplete = () => {
+      gameEngine.endDemo();
+    };
+
+    demoPlayer.start(boardRenderer, pegSystem, effectEngine, themeManager);
+  });
+
   document.getElementById('restartBtn').addEventListener('click', () => {
+    demoPlayer.stop();
+    gameEngine.endDemo();
     gameEngine.startGame(gameEngine.layoutType || 33);
   });
 
   document.getElementById('backToMenuBtn').addEventListener('click', () => {
+    demoPlayer.stop();
     gameEngine.showMenu();
   });
 

@@ -38,11 +38,13 @@ class BoardRenderer {
 
     const rows = 7;
     const cols = 7;
+    const topPadding = this.padding;
+    const bottomPadding = this.padding + 50; // extra space for bottom buttons
     const availableW = canvasWidth - this.padding * 2;
-    const availableH = canvasHeight - this.padding * 2;
+    const availableH = canvasHeight - topPadding - bottomPadding;
     const cellSize = Math.min(availableW / cols, availableH / rows);
     const offsetX = (canvasWidth - cellSize * cols) / 2;
-    const offsetY = (canvasHeight - cellSize * rows) / 2;
+    const offsetY = topPadding + (availableH - cellSize * rows) / 2;
 
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
@@ -148,6 +150,28 @@ class BoardRenderer {
       ctx.fillStyle = theme.pegColor;
       ctx.globalAlpha = 0.8;
       ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // Draw demo animating peg
+    if (gameState && gameState.demoPlaying && gameState.demoAnimPeg) {
+      const peg = gameState.demoAnimPeg;
+      const px = peg.fromX + (peg.toX - peg.fromX) * peg.progress;
+      const py = peg.fromY + (peg.toY - peg.fromY) * peg.progress;
+      ctx.beginPath();
+      ctx.arc(px, py, this.holeSize, 0, Math.PI * 2);
+      ctx.fillStyle = theme.pegColor;
+      ctx.globalAlpha = 0.9;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Glow around target
+      ctx.beginPath();
+      ctx.arc(peg.toX, peg.toY, this.holeSize * 0.7, 0, Math.PI * 2);
+      ctx.strokeStyle = theme.pegHighlight;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.5 * (1 - peg.progress);
+      ctx.stroke();
       ctx.globalAlpha = 1;
     }
   }

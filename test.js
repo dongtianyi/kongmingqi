@@ -395,3 +395,15 @@ const fs = require('fs');
   assert(code.includes('backToMenuBtn'), 'Must wire backToMenuBtn button');
   console.log('main.js structure tests passed!');
 }
+
+// Test: validate demo module structure
+{
+  const code = fs.readFileSync('js/demo.js', 'utf8');
+  assert(code.includes('class DemoPlayer'), 'DemoPlayer class must exist');
+  assert(code.includes('start'), 'start method must exist');
+  assert(code.includes('stop'), 'stop method must exist');
+  assert(code.includes('tick'), 'tick method must exist');
+  assert(code.includes('STEPS_18') || code.includes('[5,2]'), 'Must contain 18 steps data');
+  assert(code.includes('[2,2]') && code.includes('[2,4]'), 'Final step must land in center');
+  console.log('DemoPlayer structure tests passed!');
+}
