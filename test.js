@@ -144,3 +144,110 @@ const fs = require('fs');
   assert(code.includes('37'), 'Must support 37-hole layout');
   console.log('BoardRenderer structure tests passed!');
 }
+
+// Test: peg move validation logic
+{
+  // Simulate the validation logic we'll implement
+  function isValidMove(from, to, holes) {
+    if (!from || !to || to.hasPeg) return false;
+
+    // Must be same row or same col
+    if (from.row !== to.row && from.col !== to.col) return false;
+
+    // Must be exactly 2 steps away
+    const rowDist = Math.abs(from.row - to.row);
+    const colDist = Math.abs(from.col - to.col);
+    if (rowDist + colDist !== 2) return false;
+
+    // Find the jumped-over hole
+    const jumpedRow = (from.row + to.row) / 2;
+    const jumpedCol = (from.col + to.col) / 2;
+    const jumped = holes.find(h => h.row === jumpedRow && h.col === jumpedCol);
+    if (!jumped || !jumped.hasPeg) return false;
+
+    return true;
+  }
+
+  // Mock holes
+  const holes = [
+    { row: 3, col: 1, hasPeg: true },
+    { row: 3, col: 2, hasPeg: true },
+    { row: 3, col: 3, hasPeg: false },
+    { row: 3, col: 4, hasPeg: true },
+    { row: 2, col: 3, hasPeg: true },
+    { row: 4, col: 3, hasPeg: true },
+  ];
+
+  // Valid: peg at (3,1) jumps (3,2) to (3,3)
+  assert(isValidMove(holes[0], holes[2], holes) === true, 'Should allow valid horizontal jump');
+
+  // Invalid: target has peg
+  assert(isValidMove(holes[3], holes[2], holes) === false, 'Should reject move to occupied hole');
+
+  // Invalid: not 2 steps
+  const adjHole = { row: 3, col: 0, hasPeg: true };
+  assert(isValidMove(adjHole, holes[2], holes) === false, 'Should reject non-jump move');
+
+  // Invalid: diagonal
+  const diagHole = { row: 2, col: 2, hasPeg: true };
+  assert(isValidMove(diagHole, holes[2], holes) === false, 'Should reject diagonal move');
+
+  console.log('Move validation tests passed!');
+}
+
+// Test: game over detection
+{
+  function canMakeAnyMove(holes) {
+    const pegs = holes.filter(h => h.hasPeg);
+    for (const peg of pegs) {
+      // Check all 4 possible jump directions
+      const directions = [
+        { dr: 0, dc: 2 }, { dr: 0, dc: -2 },
+        { dr: 2, dc: 0 }, { dr: -2, dc: 0 }
+      ];
+      for (const dir of directions) {
+        const jumpedRow = peg.row + dir.dr / 2;
+        const jumpedCol = peg.col + dir.dc / 2;
+        const toRow = peg.row + dir.dr;
+        const toCol = peg.col + dir.dc;
+
+        const jumped = holes.find(h => h.row === jumpedRow && h.col === jumpedCol);
+        const to = holes.find(h => h.row === toRow && h.col === toCol);
+
+        if (jumped && jumped.hasPeg && to && !to.hasPeg) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  const holesWithMoves = [
+    { row: 3, col: 1, hasPeg: true },
+    { row: 3, col: 2, hasPeg: true },
+    { row: 3, col: 3, hasPeg: false },
+  ];
+  assert(canMakeAnyMove(holesWithMoves) === true, 'Should detect available moves');
+
+  const holesNoMoves = [
+    { row: 3, col: 1, hasPeg: true },
+    { row: 3, col: 4, hasPeg: true },
+    { row: 3, col: 3, hasPeg: false },
+  ];
+  assert(canMakeAnyMove(holesNoMoves) === false, 'Should detect no available moves');
+
+  console.log('Game over detection tests passed!');
+}
+
+// Test: validate pegSystem module structure
+{
+  const code = fs.readFileSync('js/pegSystem.js', 'utf8');
+  assert(code.includes('class PegSystem'), 'PegSystem class must exist');
+  assert(code.includes('isValidMove'), 'isValidMove method must exist');
+  assert(code.includes('executeMove'), 'executeMove method must exist');
+  assert(code.includes('undo'), 'undo method must exist');
+  assert(code.includes('canMakeAnyMove'), 'canMakeAnyMove method must exist');
+  assert(code.includes('isWin'), 'isWin method must exist');
+  assert(code.includes('history'), 'Must have history for undo');
+  console.log('PegSystem structure tests passed!');
+}
