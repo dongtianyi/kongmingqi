@@ -335,3 +335,24 @@ const fs = require('fs');
   assert(code.includes('lightning'), 'Must support lightning particle type');
   console.log('EffectEngine structure tests passed!');
 }
+
+// Test: validate gameEngine module structure
+{
+  const code = fs.readFileSync('js/gameEngine.js', 'utf8');
+  assert(code.includes('class GameEngine'), 'GameEngine class must exist');
+  assert(code.includes('resize'), 'resize method must exist');
+  assert(code.includes('startGame'), 'startGame method must exist');
+  assert(code.includes('handleMouseDown'), 'handleMouseDown method must exist');
+  assert(code.includes('handleMouseUp'), 'handleMouseUp method must exist');
+  assert(code.includes('handleMouseMove'), 'handleMouseMove method must exist');
+  assert(code.includes('render'), 'render method must exist');
+  assert(code.includes('getGameState'), 'getGameState method must exist');
+  assert(code.includes('undo'), 'undo method must exist');
+  assert(code.includes('showHint'), 'showHint method must exist');
+  assert(code.includes('showMenu'), 'showMenu method must exist');
+  assert(code.includes('pegSystem'), 'Must use pegSystem');
+  assert(code.includes('effectEngine'), 'Must use effectEngine');
+  assert(code.includes('boardRenderer'), 'Must use boardRenderer');
+  assert(code.includes('themeManager'), 'Must use themeManager');
+  console.log('GameEngine structure tests passed!');
+}
