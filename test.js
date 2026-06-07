@@ -369,3 +369,29 @@ const fs = require('fs');
   assert(code.includes('游戏规则'), 'Must contain rules page');
   console.log('Tutorial structure tests passed!');
 }
+
+// Test: validate main.js structure
+{
+  const code = fs.readFileSync('js/main.js', 'utf8');
+  assert(code.includes('ThemeManager'), 'Must instantiate ThemeManager');
+  assert(code.includes('BoardRenderer'), 'Must instantiate BoardRenderer');
+  assert(code.includes('PegSystem'), 'Must instantiate PegSystem');
+  assert(code.includes('EffectEngine'), 'Must instantiate EffectEngine');
+  assert(code.includes('GameEngine'), 'Must instantiate GameEngine');
+  assert(code.includes('Tutorial'), 'Must instantiate Tutorial');
+  assert(code.includes('gameLoop'), 'Must have gameLoop function');
+  assert(code.includes('requestAnimationFrame'), 'Must use requestAnimationFrame');
+  assert(code.includes('mousedown'), 'Must handle mousedown');
+  assert(code.includes('mouseup'), 'Must handle mouseup');
+  assert(code.includes('touchstart'), 'Must handle touchstart');
+  assert(code.includes('themeToggle'), 'Must wire themeToggle button');
+  assert(code.includes('undoBtn'), 'Must wire undoBtn button');
+  assert(code.includes('hintBtn'), 'Must wire hintBtn button');
+  assert(code.includes('start33'), 'Must wire start33 button');
+  assert(code.includes('start37'), 'Must wire start37 button');
+  assert(code.includes('tutorialBtn'), 'Must wire tutorialBtn button');
+  assert(code.includes('menuBtn'), 'Must wire menuBtn button');
+  assert(code.includes('restartBtn'), 'Must wire restartBtn button');
+  assert(code.includes('backToMenuBtn'), 'Must wire backToMenuBtn button');
+  console.log('main.js structure tests passed!');
+}
