@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>孔明棋</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui-overlay">
+      <button id="themeToggle" class="ui-btn">切换主题</button>
+      <button id="undoBtn" class="ui-btn">撤销</button>
+      <button id="hintBtn" class="ui-btn">提示</button>
+      <div id="statusBar">
+        <span id="stepCount">步数: 0</span>
+        <span id="pegCount">剩余棋子: 0</span>
+      </div>
+      <button id="menuBtn" class="ui-btn">菜单</button>
+    </div>
+    <div id="menuOverlay" class="overlay">
+      <div class="menu-panel">
+        <h1>孔明棋</h1>
+        <button id="start33" class="menu-btn">33格 (十字形)</button>
+        <button id="start37" class="menu-btn">37格 (菱形)</button>
+        <button id="tutorialBtn" class="menu-btn">教学</button>
+      </div>
+    </div>
+    <div id="gameOverOverlay" class="overlay hidden">
+      <div class="menu-panel">
+        <h2 id="gameOverTitle">游戏结束</h2>
+        <p id="gameOverStats"></p>
+        <button id="restartBtn" class="menu-btn">重新开始</button>
+        <button id="backToMenuBtn" class="menu-btn">返回菜单</button>
+      </div>
+    </div>
+    <div id="tutorialOverlay" class="overlay hidden">
+      <div class="menu-panel tutorial-panel">
+        <h2 id="tutorialTitle">规则</h2>
+        <div id="tutorialContent"></div>
+        <div id="tutorialNav">
+          <button id="tutorialPrev" class="menu-btn">上一页</button>
+          <button id="tutorialNext" class="menu-btn">下一页</button>
+          <button id="tutorialClose" class="menu-btn">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="js/themeManager.js"></script>
+  <script src="js/boardRenderer.js"></script>
+  <script src="js/pegSystem.js"></script>
+  <script src="js/effectEngine.js"></script>
+  <script src="js/gameEngine.js"></script>
+  <script src="js/tutorial.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
