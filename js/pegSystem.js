@@ -5,7 +5,7 @@ class PegSystem {
   }
 
   isValidMove(from, to, holes) {
-    if (!from || !to || to.hasPeg) return false;
+    if (!from || !to || !from.hasPeg || to.hasPeg) return false;
     if (from.row !== to.row && from.col !== to.col) return false;
 
     const rowDist = Math.abs(from.row - to.row);
