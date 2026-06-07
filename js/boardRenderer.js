@@ -88,6 +88,8 @@ class BoardRenderer {
     ctx.fillStyle = theme.background;
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
+    if (this.holes.length === 0) return;
+
     // Draw board border
     ctx.strokeStyle = theme.boardBorder;
     ctx.lineWidth = 2;
