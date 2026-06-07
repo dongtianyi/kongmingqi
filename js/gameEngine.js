@@ -45,6 +45,7 @@ class GameEngine {
     this.dragging = false;
     this.hintHole = null;
     this.stepCount = 0;
+    this.demoComplete = false;
     this.pegSystem.history = [];
   }
 
@@ -53,11 +54,14 @@ class GameEngine {
     this.selectedHole = null;
     this.dragging = false;
     this.hintHole = null;
+    this.demoComplete = false;
   }
 
   startDemo(demoPlayer) {
     this.demoPlaying = true;
     this.demoCurrentStep = -1;
+    this.demoAnimPeg = null;
+    this.demoComplete = false;
     this.state = 'playing';
     this.selectedHole = null;
     this.dragging = false;
@@ -69,6 +73,7 @@ class GameEngine {
     this.demoPlaying = false;
     this.demoCurrentStep = -1;
     this.demoAnimPeg = null;
+    this.demoComplete = true;
   }
 
   updateDemoState(step, animPeg) {
@@ -191,7 +196,8 @@ class GameEngine {
       pegCount: this.pegSystem.getPegCount(this.boardRenderer.holes),
       stepCount: this.stepCount,
       state: this.state,
-      isWin: this.state === 'gameover' && this.pegSystem.isWin(this.boardRenderer.holes)
+      isWin: this.state === 'gameover' && this.pegSystem.isWin(this.boardRenderer.holes),
+      demoComplete: this.demoComplete || false
     };
   }
 }

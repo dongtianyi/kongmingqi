@@ -39,6 +39,12 @@
       document.getElementById('gameOverTitle').textContent = state.isWin ? '🎉 完美胜利！' : '游戏结束';
       document.getElementById('gameOverStats').textContent = `剩余棋子: ${state.pegCount} | 总步数: ${state.stepCount}`;
     }
+
+    // Demo complete overlay
+    document.getElementById('demoCompleteOverlay').classList.toggle('hidden', !state.demoComplete);
+    if (state.demoComplete) {
+      document.getElementById('demoCompleteStats').textContent = `剩余棋子: ${state.pegCount} | 演示步数: 18`;
+    }
   }
 
   setInterval(updateUI, 100);
@@ -155,6 +161,22 @@
 
   document.getElementById('backToMenuBtn').addEventListener('click', () => {
     demoPlayer.stop();
+    gameEngine.showMenu();
+  });
+
+  document.getElementById('demoRestartBtn').addEventListener('click', () => {
+    demoPlayer.stop();
+    gameEngine.endDemo();
+    gameEngine.startGame(33);
+    themeManager.apply();
+    // Start demo again
+    gameEngine.startDemo(demoPlayer);
+    demoPlayer.start(boardRenderer, pegSystem, effectEngine, themeManager);
+  });
+
+  document.getElementById('demoBackToMenuBtn').addEventListener('click', () => {
+    demoPlayer.stop();
+    gameEngine.endDemo();
     gameEngine.showMenu();
   });
 
