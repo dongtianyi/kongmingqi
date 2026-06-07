@@ -322,3 +322,16 @@ const fs = require('fs');
   assert(code.includes('history'), 'Must have history for undo');
   console.log('PegSystem structure tests passed!');
 }
+
+// Test: validate effectEngine module structure
+{
+  const code = fs.readFileSync('js/effectEngine.js', 'utf8');
+  assert(code.includes('class EffectEngine'), 'EffectEngine class must exist');
+  assert(code.includes('emitParticle'), 'emitParticle method must exist');
+  assert(code.includes('emitMoveTrail'), 'emitMoveTrail method must exist');
+  assert(code.includes('update'), 'update method must exist');
+  assert(code.includes('draw'), 'draw method must exist');
+  assert(code.includes('wind'), 'Must support wind particle type');
+  assert(code.includes('lightning'), 'Must support lightning particle type');
+  console.log('EffectEngine structure tests passed!');
+}
