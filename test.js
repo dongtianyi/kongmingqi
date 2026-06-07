@@ -356,3 +356,16 @@ const fs = require('fs');
   assert(code.includes('themeManager'), 'Must use themeManager');
   console.log('GameEngine structure tests passed!');
 }
+
+// Test: validate tutorial module structure
+{
+  const code = fs.readFileSync('js/tutorial.js', 'utf8');
+  assert(code.includes('class Tutorial'), 'Tutorial class must exist');
+  assert(code.includes('show'), 'show method must exist');
+  assert(code.includes('hide'), 'hide method must exist');
+  assert(code.includes('nextPage'), 'nextPage method must exist');
+  assert(code.includes('prevPage'), 'prevPage method must exist');
+  assert(code.includes('欢迎'), 'Must contain welcome page');
+  assert(code.includes('游戏规则'), 'Must contain rules page');
+  console.log('Tutorial structure tests passed!');
+}
