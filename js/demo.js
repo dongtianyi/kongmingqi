@@ -2,30 +2,31 @@
 class DemoPlayer {
   constructor() {
     this.steps = [
-      { from: [5,2], to: [3,2] },
-      { from: [1,4], to: [3,4] },
-      { from: [3,0], to: [3,2] },
-      { from: [3,5], to: [3,3] },
-      { from: [3,6], to: [3,4] },
-      { from: [5,4], to: [3,4] },
-      { from: [2,4], to: [4,4] },
-      { from: [1,2], to: [3,2] },
+      { from: [1,3], to: [3,3] },
+      { from: [2,1], to: [2,3] },
       { from: [0,2], to: [2,2] },
-      { from: [2,2], to: [4,2] },
-      { from: [4,0], to: [4,2] },
-      { from: [4,3], to: [4,1] },
-      { from: [4,6], to: [4,4] },
-      { from: [2,6], to: [4,6] },
-      { from: [6,4], to: [4,4] },
-      { from: [4,4], to: [2,4] },
-      { from: [2,4], to: [2,2] },
-      { from: [2,2], to: [2,4] },
+      { from: [0,4], to: [0,2] },
+      { from: [2,3], to: [2,1] },
+      { from: [2,0], to: [2,2] },
+      { from: [2,4], to: [0,4] },
+      { from: [2,6], to: [2,4] },
+      { from: [3,2], to: [1,2] },
+      { from: [0,2], to: [2,2] },
+      { from: [3,0], to: [3,2] },
+      { from: [3,2], to: [1,2] },
+      { from: [3,4], to: [3,2] },
+      { from: [3,6], to: [3,4] },
+      { from: [3,4], to: [1,4] },
+      { from: [0,4], to: [2,4] },
+      { from: [4,2], to: [2,2] },
+      { from: [1,2], to: [3,2] },
     ];
     this.currentStep = -1;
     this.isPlaying = false;
     this.animating = false;
     this.animProgress = 0;
     this.animDuration = 600; // ms per step animation
+    this._animFrames = 30; // frames for full animation at 60fps
     this.stepDelay = 800; // ms pause between steps
     this.onStepComplete = null;
     this.onDemoComplete = null;
@@ -120,10 +121,21 @@ class DemoPlayer {
     };
   }
 
-  tick() {
-    if (this.animating) {
-      this.animProgress += 0.02;
-      if (this.animProgress > 1) this.animProgress = 1;
+  tick(gameEngine) {
+    if (this.animating && gameEngine) {
+      this.animProgress += 1 / this._animFrames;
+      if (this.animProgress >= 1) {
+        this.animProgress = 1;
+      }
+      if (this._currentAnimFrom && this._currentAnimTo) {
+        gameEngine.demoAnimPeg = {
+          fromX: this._currentAnimFrom.x,
+          fromY: this._currentAnimFrom.y,
+          toX: this._currentAnimTo.x,
+          toY: this._currentAnimTo.y,
+          progress: this.animProgress
+        };
+      }
     }
   }
 

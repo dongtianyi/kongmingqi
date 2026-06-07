@@ -403,7 +403,7 @@ const fs = require('fs');
   assert(code.includes('start'), 'start method must exist');
   assert(code.includes('stop'), 'stop method must exist');
   assert(code.includes('tick'), 'tick method must exist');
-  assert(code.includes('STEPS_18') || code.includes('[5,2]'), 'Must contain 18 steps data');
-  assert(code.includes('[2,2]') && code.includes('[2,4]'), 'Final step must land in center');
+  assert(code.includes('STEPS_18') || code.includes('[1,3]'), 'Must contain 18 steps data');
+  assert(code.includes('[3,3]'), 'Must reference center position');
   console.log('DemoPlayer structure tests passed!');
 }

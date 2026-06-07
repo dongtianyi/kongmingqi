@@ -14,7 +14,7 @@
 
   // Main render loop
   function gameLoop() {
-    demoPlayer.tick();
+    demoPlayer.tick(gameEngine);
     gameEngine.render();
     requestAnimationFrame(gameLoop);
   }
@@ -27,7 +27,7 @@
     document.getElementById('pegCount').textContent = `剩余棋子: ${state.pegCount}`;
 
     if (gameEngine.demoPlaying && demoPlayer.getCurrentStep() >= 0) {
-      document.getElementById('stepCount').textContent = `演示: ${demoPlayer.getCurrentStep() + 1}/18`;
+      document.getElementById('stepCount').textContent = `演示: ${demoPlayer.getCurrentStep() + 1}/${demoPlayer.getTotalSteps()}`;
     }
 
     // Overlays

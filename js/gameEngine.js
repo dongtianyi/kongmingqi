@@ -32,7 +32,7 @@ class GameEngine {
     this.canvas.style.height = size + 'px';
     this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-    if (this.state !== 'menu') {
+    if (this.state !== 'menu' && !this.demoPlaying) {
       this.boardRenderer.init(this.layoutType, this.canvas.width / window.devicePixelRatio, this.canvas.height / window.devicePixelRatio);
     }
   }
@@ -91,12 +91,14 @@ class GameEngine {
   }
 
   handleMouseMove(x, y) {
+    if (this.demoPlaying) return;
     if (!this.dragging) return;
     this.dragX = x;
     this.dragY = y;
   }
 
   handleMouseUp(x, y) {
+    if (this.demoPlaying) return;
     if (!this.dragging || !this.selectedHole) {
       this.dragging = false;
       return;
@@ -127,6 +129,7 @@ class GameEngine {
   }
 
   undo() {
+    if (this.demoPlaying) return;
     if (this.state !== 'playing') return;
     if (this.pegSystem.history.length === 0) return;
     this.pegSystem.undo(this.boardRenderer.holes);
@@ -134,6 +137,7 @@ class GameEngine {
   }
 
   showHint() {
+    if (this.demoPlaying) return;
     if (this.state !== 'playing') return;
     for (const hole of this.boardRenderer.holes) {
       if (hole.hasPeg && this.pegSystem.getValidMoves(hole, this.boardRenderer.holes).length > 0) {
