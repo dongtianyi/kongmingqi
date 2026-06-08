@@ -61,18 +61,22 @@ class DemoPlayer {
     ];
 
     this.currentMove = -1;
-    this.currentJumpInMove = -1;
     this.isPlaying = false;
     this.animating = false;
-    this.animProgress = 0;
+    this.animStartTime = 0;
     this.animDuration = 400; // ms per individual jump animation
-    this.jumpDelay = 150; // ms pause between jumps within same move
-    this.stepDelay = 600; // ms pause between moves
+    this.jumpDelay = 200; // ms pause between jumps within same move
+    this.stepDelay = 800; // ms pause between moves
     this.onStepComplete = null;
     this.onDemoComplete = null;
     this._timeout = null;
     this._currentAnimFrom = null;
     this._currentAnimTo = null;
+    this._boardRenderer = null;
+    this._pegSystem = null;
+    this._effectEngine = null;
+    this._themeManager = null;
+    this._demoId = 0; // incremented per start() to invalidate old callbacks
   }
 
   start(boardRenderer, pegSystem, effectEngine, themeManager) {
@@ -85,9 +89,17 @@ class DemoPlayer {
     // Clear undo history
     pegSystem.history = [];
 
+    // Store references for recursive callbacks
+    this._boardRenderer = boardRenderer;
+    this._pegSystem = pegSystem;
+    this._effectEngine = effectEngine;
+    this._themeManager = themeManager;
+
     this.currentMove = -1;
     this.isPlaying = true;
-    this._playNextMove(boardRenderer, pegSystem, effectEngine, themeManager);
+    this._demoId++;
+
+    this._playNextMove(this._demoId);
   }
 
   stop() {
@@ -95,96 +107,110 @@ class DemoPlayer {
     this.animating = false;
     if (this._timeout) clearTimeout(this._timeout);
     this._timeout = null;
+    this._currentAnimFrom = null;
+    this._currentAnimTo = null;
   }
 
-  _playNextMove(boardRenderer, pegSystem, effectEngine, themeManager) {
+  _playNextMove(demoId) {
     if (!this.isPlaying) return;
 
     this.currentMove++;
     if (this.currentMove >= this.moves.length) {
       this.isPlaying = false;
       this.animating = false;
-      if (this.onDemoComplete) this.onDemoComplete();
+      if (this._demoId === demoId && this.onDemoComplete) this.onDemoComplete();
       return;
     }
 
     const move = this.moves[this.currentMove];
-    this._executeJumpsInMove(move, 0, boardRenderer, pegSystem, effectEngine, themeManager);
+    this._executeJumpsInMove(move, 0, demoId);
   }
 
-  _executeJumpsInMove(move, jumpIndex, boardRenderer, pegSystem, effectEngine, themeManager) {
+  _executeJumpsInMove(move, jumpIndex, demoId) {
     if (!this.isPlaying || jumpIndex >= move.length) {
       // Move complete, schedule next move
       if (this.isPlaying) {
         this._timeout = setTimeout(() => {
-          this._playNextMove(boardRenderer, pegSystem, effectEngine, themeManager);
+          if (this.isPlaying) this._playNextMove(demoId);
         }, this.stepDelay);
       }
       return;
     }
 
     const jump = move[jumpIndex];
-    const fromHole = boardRenderer.getHoleByRowCol(jump.from[0], jump.from[1]);
-    const toHole = boardRenderer.getHoleByRowCol(jump.to[0], jump.to[1]);
+    const fromHole = this._boardRenderer.getHoleByRowCol(jump.from[0], jump.from[1]);
+    const toHole = this._boardRenderer.getHoleByRowCol(jump.to[0], jump.to[1]);
 
     if (!fromHole || !toHole) {
-      console.warn(`Demo move ${this.currentMove + 1} jump ${jumpIndex + 1}: hole not found`, jump);
-      this._executeJumpsInMove(move, jumpIndex + 1, boardRenderer, pegSystem, effectEngine, themeManager);
+      console.warn('Demo move ' + (this.currentMove + 1) + ' jump ' + (jumpIndex + 1) + ': hole not found', jump);
+      this._executeJumpsInMove(move, jumpIndex + 1, demoId);
       return;
     }
 
-    if (pegSystem.isValidMove(fromHole, toHole, boardRenderer.holes)) {
+    if (this._pegSystem.isValidMove(fromHole, toHole, this._boardRenderer.holes)) {
       // Start animation for this jump
       this.animating = true;
-      this.animProgress = 0;
+      this.animStartTime = performance.now();
       this._currentAnimFrom = fromHole;
       this._currentAnimTo = toHole;
 
       // Execute the actual move
-      pegSystem.executeMove(fromHole, toHole, boardRenderer.holes);
+      this._pegSystem.executeMove(fromHole, toHole, this._boardRenderer.holes);
 
       // Emit particle effect
-      effectEngine.setTheme(themeManager.getTheme().particleType);
-      effectEngine.emitMoveTrail(fromHole.x, fromHole.y, toHole.x, toHole.y);
+      this._effectEngine.setTheme(this._themeManager.getTheme().particleType);
+      this._effectEngine.emitMoveTrail(fromHole.x, fromHole.y, toHole.x, toHole.y);
 
-      if (this.onStepComplete) this.onStepComplete(this.currentMove + 1, jumpIndex, this.getAnimatingPeg());
+      if (this._demoId === demoId && this.onStepComplete) {
+        this.onStepComplete(this.currentMove + 1, jumpIndex, this.getAnimatingPeg());
+      }
 
       // After animation completes, continue to next jump or next move
-      setTimeout(() => {
-        this.animating = false;
-        this._currentAnimFrom = null;
-        this._currentAnimTo = null;
+      const self = this;
+      this._timeout = setTimeout(function() {
+        self.animating = false;
+        self._currentAnimFrom = null;
+        self._currentAnimTo = null;
 
-        if (this.isPlaying) {
-          const delay = jumpIndex < move.length - 1 ? this.jumpDelay : this.stepDelay;
-          this._timeout = setTimeout(() => {
-            this._executeJumpsInMove(move, jumpIndex + 1, boardRenderer, pegSystem, effectEngine, themeManager);
+        if (self.isPlaying) {
+          const delay = jumpIndex < move.length - 1 ? self.jumpDelay : self.stepDelay;
+          self._timeout = setTimeout(function() {
+            if (self.isPlaying) self._executeJumpsInMove(move, jumpIndex + 1, demoId);
           }, delay);
         }
       }, this.animDuration);
     } else {
-      console.warn(`Demo move ${this.currentMove + 1} jump ${jumpIndex + 1}: invalid move`, jump);
-      this._executeJumpsInMove(move, jumpIndex + 1, boardRenderer, pegSystem, effectEngine, themeManager);
+      console.warn('Demo move ' + (this.currentMove + 1) + ' jump ' + (jumpIndex + 1) + ': invalid move', jump);
+      this._executeJumpsInMove(move, jumpIndex + 1, demoId);
     }
   }
 
   tick(gameEngine) {
-    if (this.animating && gameEngine) {
-      const framesPerJump = Math.round(this.animDuration / 16.67); // ~60fps
-      this.animProgress += 1 / framesPerJump;
-      if (this.animProgress >= 1) {
-        this.animProgress = 1;
-      }
-      if (this._currentAnimFrom && this._currentAnimTo) {
-        gameEngine.demoAnimPeg = {
-          fromX: this._currentAnimFrom.x,
-          fromY: this._currentAnimFrom.y,
-          toX: this._currentAnimTo.x,
-          toY: this._currentAnimTo.y,
-          progress: this.animProgress
-        };
-      }
+    if (this.animating && gameEngine && this._currentAnimFrom && this._currentAnimTo) {
+      const elapsed = performance.now() - this.animStartTime;
+      const progress = Math.min(1, elapsed / this.animDuration);
+
+      gameEngine.demoAnimPeg = {
+        fromX: this._currentAnimFrom.x,
+        fromY: this._currentAnimFrom.y,
+        toX: this._currentAnimTo.x,
+        toY: this._currentAnimTo.y,
+        progress: progress
+      };
     }
+  }
+
+  getAnimatingPeg() {
+    if (!this.animating || !this._currentAnimFrom || !this._currentAnimTo) return null;
+    const elapsed = performance.now() - this.animStartTime;
+    const progress = Math.min(1, elapsed / this.animDuration);
+    return {
+      fromX: this._currentAnimFrom.x,
+      fromY: this._currentAnimFrom.y,
+      toX: this._currentAnimTo.x,
+      toY: this._currentAnimTo.y,
+      progress: progress
+    };
   }
 
   getCurrentStep() {
