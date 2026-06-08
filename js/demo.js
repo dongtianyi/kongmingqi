@@ -1,52 +1,93 @@
 // js/demo.js
+// Bergholt 18-move optimal solution for English 33-hole Peg Solitaire
+// 18 turns, 31 individual jumps, ending with 1 peg in center
 class DemoPlayer {
   constructor() {
-    this.steps = [
-      { from: [1,3], to: [3,3] },
-      { from: [2,1], to: [2,3] },
-      { from: [0,2], to: [2,2] },
-      { from: [0,4], to: [0,2] },
-      { from: [2,3], to: [2,1] },
-      { from: [2,0], to: [2,2] },
-      { from: [2,4], to: [0,4] },
-      { from: [2,6], to: [2,4] },
-      { from: [3,2], to: [1,2] },
-      { from: [0,2], to: [2,2] },
-      { from: [3,0], to: [3,2] },
-      { from: [3,2], to: [1,2] },
-      { from: [3,4], to: [3,2] },
-      { from: [3,6], to: [3,4] },
-      { from: [3,4], to: [1,4] },
-      { from: [0,4], to: [2,4] },
-      { from: [4,2], to: [2,2] },
-      { from: [1,2], to: [3,2] },
+    // Each move is an array of jumps; each jump is {from: [r,c], to: [r,c]}
+    // Multi-jump turns represent continuous leaps by a single piece
+    this.moves = [
+      // Move 1: 15→17 (single)
+      [{ from: [3,1], to: [3,3] }],
+      // Move 2: 28→16 (single)
+      [{ from: [5,2], to: [3,2] }],
+      // Move 3: 21→23 (single)
+      [{ from: [4,0], to: [4,2] }],
+      // Move 4: 24→22 (single)
+      [{ from: [4,3], to: [4,1] }],
+      // Move 5: 26→24 (single)
+      [{ from: [4,5], to: [4,3] }],
+      // Move 6: 33→25 (single)
+      [{ from: [6,4], to: [4,4] }],
+      // Move 7: 18→30 (single)
+      [{ from: [3,4], to: [5,4] }],
+      // Move 8: 31→33→25 (double)
+      [{ from: [6,2], to: [6,4] }, { from: [6,4], to: [4,4] }],
+      // Move 9: 9→23 (single)
+      [{ from: [2,2], to: [4,2] }],
+      // Move 10: 1→9 (single)
+      [{ from: [0,2], to: [2,2] }],
+      // Move 11: 6→18→30→28→16→4 (5 jumps)
+      [
+        { from: [1,4], to: [3,4] },
+        { from: [3,4], to: [5,4] },
+        { from: [5,4], to: [5,2] },
+        { from: [5,2], to: [3,2] },
+        { from: [3,2], to: [1,2] },
+      ],
+      // Move 12: 7→21→23→25 (3 jumps)
+      [
+        { from: [2,0], to: [4,0] },
+        { from: [4,0], to: [4,2] },
+        { from: [4,2], to: [4,4] },
+      ],
+      // Move 13: 13→11 (single)
+      [{ from: [2,6], to: [2,4] }],
+      // Move 14: 10→12 (single)
+      [{ from: [2,3], to: [2,5] }],
+      // Move 15: 27→13→11 (double)
+      [{ from: [4,6], to: [2,6] }, { from: [2,6], to: [2,4] }],
+      // Move 16: 3→1→9 (double)
+      [{ from: [0,4], to: [0,2] }, { from: [0,2], to: [2,2] }],
+      // Move 17: 8→10→12→26→24→10 (5 jumps)
+      [
+        { from: [2,1], to: [2,3] },
+        { from: [2,3], to: [2,5] },
+        { from: [2,5], to: [4,5] },
+        { from: [4,5], to: [4,3] },
+        { from: [4,3], to: [2,3] },
+      ],
+      // Move 18: 5→17 (single, final to center)
+      [{ from: [1,3], to: [3,3] }],
     ];
-    this.currentStep = -1;
+
+    this.currentMove = -1;
+    this.currentJumpInMove = -1;
     this.isPlaying = false;
     this.animating = false;
     this.animProgress = 0;
-    this.animDuration = 600; // ms per step animation
-    this._animFrames = 30; // frames for full animation at 60fps
-    this.stepDelay = 800; // ms pause between steps
+    this.animDuration = 400; // ms per individual jump animation
+    this.jumpDelay = 150; // ms pause between jumps within same move
+    this.stepDelay = 600; // ms pause between moves
     this.onStepComplete = null;
     this.onDemoComplete = null;
     this._timeout = null;
+    this._currentAnimFrom = null;
+    this._currentAnimTo = null;
   }
 
   start(boardRenderer, pegSystem, effectEngine, themeManager) {
-    // Reset board to initial state (board already initialized by gameEngine.startGame)
+    // Reset board to initial state
     for (const hole of boardRenderer.holes) {
       hole.hasPeg = true;
     }
-    // Ensure center is empty
     const center = boardRenderer.getHoleByRowCol(3, 3);
     if (center) center.hasPeg = false;
     // Clear undo history
     pegSystem.history = [];
 
-    this.currentStep = -1;
+    this.currentMove = -1;
     this.isPlaying = true;
-    this._playNext(boardRenderer, pegSystem, effectEngine, themeManager);
+    this._playNextMove(boardRenderer, pegSystem, effectEngine, themeManager);
   }
 
   stop() {
@@ -56,29 +97,44 @@ class DemoPlayer {
     this._timeout = null;
   }
 
-  _playNext(boardRenderer, pegSystem, effectEngine, themeManager) {
+  _playNextMove(boardRenderer, pegSystem, effectEngine, themeManager) {
     if (!this.isPlaying) return;
 
-    this.currentStep++;
-    if (this.currentStep >= this.steps.length) {
+    this.currentMove++;
+    if (this.currentMove >= this.moves.length) {
       this.isPlaying = false;
+      this.animating = false;
       if (this.onDemoComplete) this.onDemoComplete();
       return;
     }
 
-    const step = this.steps[this.currentStep];
-    const fromHole = boardRenderer.getHoleByRowCol(step.from[0], step.from[1]);
-    const toHole = boardRenderer.getHoleByRowCol(step.to[0], step.to[1]);
+    const move = this.moves[this.currentMove];
+    this._executeJumpsInMove(move, 0, boardRenderer, pegSystem, effectEngine, themeManager);
+  }
 
-    if (!fromHole || !toHole) {
-      console.warn(`Demo step ${this.currentStep + 1}: hole not found`, step);
-      this._playNext(boardRenderer, pegSystem, effectEngine, themeManager);
+  _executeJumpsInMove(move, jumpIndex, boardRenderer, pegSystem, effectEngine, themeManager) {
+    if (!this.isPlaying || jumpIndex >= move.length) {
+      // Move complete, schedule next move
+      if (this.isPlaying) {
+        this._timeout = setTimeout(() => {
+          this._playNextMove(boardRenderer, pegSystem, effectEngine, themeManager);
+        }, this.stepDelay);
+      }
       return;
     }
 
-    // Execute the move
+    const jump = move[jumpIndex];
+    const fromHole = boardRenderer.getHoleByRowCol(jump.from[0], jump.from[1]);
+    const toHole = boardRenderer.getHoleByRowCol(jump.to[0], jump.to[1]);
+
+    if (!fromHole || !toHole) {
+      console.warn(`Demo move ${this.currentMove + 1} jump ${jumpIndex + 1}: hole not found`, jump);
+      this._executeJumpsInMove(move, jumpIndex + 1, boardRenderer, pegSystem, effectEngine, themeManager);
+      return;
+    }
+
     if (pegSystem.isValidMove(fromHole, toHole, boardRenderer.holes)) {
-      // Animate: highlight from hole, then move
+      // Start animation for this jump
       this.animating = true;
       this.animProgress = 0;
       this._currentAnimFrom = fromHole;
@@ -91,39 +147,31 @@ class DemoPlayer {
       effectEngine.setTheme(themeManager.getTheme().particleType);
       effectEngine.emitMoveTrail(fromHole.x, fromHole.y, toHole.x, toHole.y);
 
-      if (this.onStepComplete) this.onStepComplete(this.currentStep + 1);
+      if (this.onStepComplete) this.onStepComplete(this.currentMove + 1, jumpIndex, this.getAnimatingPeg());
 
-      // End animation after duration
+      // After animation completes, continue to next jump or next move
       setTimeout(() => {
         this.animating = false;
         this._currentAnimFrom = null;
         this._currentAnimTo = null;
+
         if (this.isPlaying) {
+          const delay = jumpIndex < move.length - 1 ? this.jumpDelay : this.stepDelay;
           this._timeout = setTimeout(() => {
-            this._playNext(boardRenderer, pegSystem, effectEngine, themeManager);
-          }, this.stepDelay);
+            this._executeJumpsInMove(move, jumpIndex + 1, boardRenderer, pegSystem, effectEngine, themeManager);
+          }, delay);
         }
       }, this.animDuration);
     } else {
-      console.warn(`Demo step ${this.currentStep + 1}: invalid move`, step);
-      this._playNext(boardRenderer, pegSystem, effectEngine, themeManager);
+      console.warn(`Demo move ${this.currentMove + 1} jump ${jumpIndex + 1}: invalid move`, jump);
+      this._executeJumpsInMove(move, jumpIndex + 1, boardRenderer, pegSystem, effectEngine, themeManager);
     }
-  }
-
-  getAnimatingPeg() {
-    if (!this.animating || !this._currentAnimFrom || !this._currentAnimTo) return null;
-    return {
-      fromX: this._currentAnimFrom.x,
-      fromY: this._currentAnimFrom.y,
-      toX: this._currentAnimTo.x,
-      toY: this._currentAnimTo.y,
-      progress: this.animating ? Math.min(1, this.animProgress) : 1
-    };
   }
 
   tick(gameEngine) {
     if (this.animating && gameEngine) {
-      this.animProgress += 1 / this._animFrames;
+      const framesPerJump = Math.round(this.animDuration / 16.67); // ~60fps
+      this.animProgress += 1 / framesPerJump;
       if (this.animProgress >= 1) {
         this.animProgress = 1;
       }
@@ -140,10 +188,10 @@ class DemoPlayer {
   }
 
   getCurrentStep() {
-    return this.currentStep;
+    return this.currentMove + 1;
   }
 
   getTotalSteps() {
-    return this.steps.length;
+    return this.moves.length;
   }
 }

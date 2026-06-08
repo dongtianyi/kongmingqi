@@ -27,7 +27,7 @@
     document.getElementById('pegCount').textContent = `剩余棋子: ${state.pegCount}`;
 
     if (gameEngine.demoPlaying && demoPlayer.getCurrentStep() >= 0) {
-      document.getElementById('stepCount').textContent = `演示: ${demoPlayer.getCurrentStep() + 1}/${demoPlayer.getTotalSteps()}`;
+      document.getElementById('stepCount').textContent = `天才十八步 - 第 ${demoPlayer.getCurrentStep()} / ${demoPlayer.getTotalSteps()} 步`;
     }
 
     // Overlays
@@ -43,7 +43,7 @@
     // Demo complete overlay
     document.getElementById('demoCompleteOverlay').classList.toggle('hidden', !state.demoComplete);
     if (state.demoComplete) {
-      document.getElementById('demoCompleteStats').textContent = `剩余棋子: ${state.pegCount} | 演示步数: 18`;
+      document.getElementById('demoCompleteStats').textContent = `剩余棋子: ${state.pegCount} | 演示步数: 18 (跳跃31次)`;
     }
   }
 
@@ -142,8 +142,8 @@
     themeManager.apply();
     gameEngine.startDemo(demoPlayer);
 
-    demoPlayer.onStepComplete = (step) => {
-      gameEngine.updateDemoState(step, demoPlayer.getAnimatingPeg());
+    demoPlayer.onStepComplete = (moveNum, jumpIdx, animPeg) => {
+      gameEngine.updateDemoState(moveNum, animPeg);
     };
 
     demoPlayer.onDemoComplete = () => {

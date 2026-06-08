@@ -171,24 +171,7 @@ class GameEngine {
       this.boardRenderer.draw(this.ctx, theme, gameState);
       this.effectEngine.update();
       this.effectEngine.draw(this.ctx, theme);
-
-      // Draw demo step indicator
-      if (this.demoPlaying && this.demoCurrentStep >= 0) {
-        this._drawDemoIndicator(theme);
-      }
     }
-  }
-
-  _drawDemoIndicator(theme) {
-    const canvasW = this.canvas.width / window.devicePixelRatio;
-    const text = `天才十八步 - 第 ${this.demoCurrentStep + 1} / 18 步`;
-    this.ctx.save();
-    this.ctx.font = 'bold 16px sans-serif';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillStyle = theme.textColor;
-    this.ctx.globalAlpha = 0.9;
-    this.ctx.fillText(text, canvasW / 2, 30);
-    this.ctx.restore();
   }
 
   getGameState() {
